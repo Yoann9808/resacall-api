@@ -12,7 +12,7 @@ Workflow core : appel manqué Twilio → WhatsApp automatique → agent Claude I
 **Deux repos :**
 
 - `resacall-api` — backend Node.js (ce repo)
-- `resacall-dashboard` — frontend Next.js (repo séparé)
+- `resacall-frontend` — frontend Next.js (repo séparé)
 
 ---
 
@@ -176,10 +176,7 @@ await db.missed_calls.createIndex({
   called_at: -1,
 });
 await db.conversations.createIndex({ customer_phone: 1, status: 1 }); // CRITIQUE
-await db.conversations.createIndex(
-  { expires_at: 1 },
-  { expireAfterSeconds: 0 },
-);
+await db.conversations.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 });
 await db.reservations.createIndex({ restaurant_id: 1, date_time: 1 });
 ```
 
@@ -235,7 +232,7 @@ let messages = conversation.messages; // format natif MongoDB → Claude API dir
 
 while (true) {
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-5",
+    model: 'claude-sonnet-4-5',
     max_tokens: 1024,
     system: buildSystemPrompt(restaurant, conversation.detected_language),
     tools,
@@ -243,28 +240,21 @@ while (true) {
   });
 
   // Sauvegarder chaque tour en base
-  await Conversation.updateOne(
-    { _id },
-    { $push: { messages: { $each: newMessages } } },
-  );
+  await Conversation.updateOne({ _id }, { $push: { messages: { $each: newMessages } } });
 
-  if (response.stop_reason !== "tool_use") break;
+  if (response.stop_reason !== 'tool_use') break;
 
   // Traiter les tool_use et construire les tool_result
   const toolResults = await processToolUse(response.content, restaurant);
   messages = [
     ...messages,
-    { role: "assistant", content: response.content },
-    { role: "user", content: toolResults },
+    { role: 'assistant', content: response.content },
+    { role: 'user', content: toolResults },
   ];
 }
 
 // Envoyer la réponse finale au client via Twilio WA
-await whatsappService.send(
-  restaurant.whatsapp_number,
-  conversation.customer_phone,
-  finalText,
-);
+await whatsappService.send(restaurant.whatsapp_number, conversation.customer_phone, finalText);
 ```
 
 ### System prompt dynamique
@@ -319,12 +309,7 @@ export async function checkAvailability(
   serviceId,
   partySize,
 ): Promise<SlotResult[]>;
-export async function getSlots(
-  restaurantId,
-  date,
-  serviceId?,
-  partySize?,
-): Promise<SlotResult[]>;
+export async function getSlots(restaurantId, date, serviceId?, partySize?): Promise<SlotResult[]>;
 
 // Ordre des vérifications :
 // 1. exceptions[] — fermeture ce jour ?
@@ -389,7 +374,7 @@ if (!result.success) return reply.status(400).send({ error: result.error.flatten
 // Toujours async/await — jamais de .then().catch() nu
 // Les webhooks répondent 200 AVANT de lancer le traitement async :
 reply.send({ success: true }); // réponse immédiate
-await agentQueue.add("process", payload); // async après
+await agentQueue.add('process', payload); // async après
 ```
 
 ---
