@@ -1,4 +1,4 @@
-# CLAUDE.md — Resacall
+# CLAUDE.md — Resacall //
 
 Contexte permanent pour Claude Code. Lis ce fichier en entier avant de toucher au code.
 
