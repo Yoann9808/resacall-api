@@ -1,8 +1,11 @@
 import Fastify from 'fastify';
 import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
+import fastifyFormbody from '@fastify/formbody';
 import mongoose from 'mongoose';
 import { env } from './config/env';
+import { webhooksRoutes } from './routes/webhooks';
+import { startWhatsappWorker } from './jobs/whatsappQueue';
 
 // --- Fastify instance ---
 const fastify = Fastify({
@@ -43,9 +46,13 @@ async function bootstrap(): Promise<void> {
     origin: env.APP_URL,
     credentials: true,
   });
+  await fastify.register(fastifyFormbody);
+
+  fastify.register(webhooksRoutes, { prefix: '/webhooks' });
+
+  startWhatsappWorker(fastify.log);
 
   // Routes — uncomment as each file is implemented:
-  // const { webhooksRoutes } = await import('./routes/webhooks');
   // const { authRoutes } = await import('./routes/auth');
   // const { restaurantsRoutes } = await import('./routes/restaurants');
   // const { reservationsRoutes } = await import('./routes/reservations');
@@ -55,7 +62,6 @@ async function bootstrap(): Promise<void> {
   // const { adminRoutes } = await import('./routes/admin');
   // const { utilsRoutes } = await import('./routes/utils');
   //
-  // fastify.register(webhooksRoutes, { prefix: '/webhooks' });
   // fastify.register(authRoutes, { prefix: '/auth' });
   // fastify.register(restaurantsRoutes, { prefix: '/restaurants' });
   // fastify.register(reservationsRoutes, { prefix: '/restaurants' });
